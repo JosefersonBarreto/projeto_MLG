@@ -1,0 +1,53 @@
+body {
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 19px;
+    line-height: 1.42857143;
+    color: #000;
+    /*background-color: #00ffa724;*/
+    background-color: #586573;
+}
+
+.hljs-comment {
+    color: #9202ff;
+    font-style: normal;
+    font-size: 18px;
+    padding-bottom: 3px;
+    border: 8px;
+    border-bottom-color: aqua;
+    border-color: #71c3c3;
+}
+
+.main-content pre {
+    padding: 8px;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font: 1rem Consolas,"Liberation Mono",Menlo,Courier,monospace;
+    color: #567482;
+    word-wrap: normal;
+    background-color: #f3f6fa;
+    border: solid 4px #33516f;
+    border-radius: .3rem;
+    line-height: 1.45;
+    overflow: auto;
+}
+
+
+
+pre {
+    display: block;
+    padding: 9.5px;
+    margin: 0 0 10px;
+    font-size: 13px;
+    line-height: 1.42857143;
+    color: #333;
+    word-break: break-all;
+    word-wrap: break-word;
+    background-color: #ffffff;
+    border: 6px solid #2230c5;
+    border-radius: 4px;
+}
+
+.tocify .list-group-item {
+    border-radius: 0px;
+    color: #344040;
+}

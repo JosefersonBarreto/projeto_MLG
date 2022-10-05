@@ -1,0 +1,147 @@
+---
+title: <p style="text-align:center"><img src="https://www.infoescola.com/wp-content/uploads/2018/05/UEPB.png" width="1200" height="360" /></p> "Modelos Lineares Generalizados"
+author: "joseferson da silva barreto e Antonio Victor"
+date: "2022-09-30"
+output:
+ html_document:
+    toc: true
+    toc_float: true
+    css: www/meu_cs.css
+---
+
+
+
+# Objetivo 
+
+Objetivo é executar uma analise afim de buscar relações entre as variáveis e conseguir um melhor ajuste  para fazer detrminadas predições , para esta análise vamos utilizar o pacote RStanArm  e o software Rstúdio 
+
+
+# Metodologia
+
+para está análise utilizaremos o pacote ** RStanArm**  e o banco de dados **wells**   é uma survey com 3.2k de moradores de uma área em Bangladesh na qual os lençóes freáticos estão contaminados por arsênico. Respondentes com altos níveis de arsênico nos seus poços foram encorajados a trocar de fonte de água.
+
+Variáveis:
+
+
+* **switch*** (y): trocou ou não de poço
+
+* **arsenic*** : nível de arsênico no poço  
+
+* **dist*** : distância até o posto mais seguro   
+
+* **association*** : se o membros da casa fazem parte de alguma associação   
+
+
+* **educ*** :escolaridade do chefe da família  
+
+
+
+# introdução
+
+
+Os modelos  lineares  Generalizados são utilizados quando utilizar os modelos clássicos  que  pressupoem que os dados seguem uma distribuição  normal  e principalmente onde temos dados que segue uma base de dados discretos . O princípio do GLM é pegar uma família de distribuições  ao ínves de uma única distribuição  que no nosso caso será a famíla exponencial  , ou sejá , ao ínves de trabalhar apenas com a normal , trabalhamos com várias distribuições : gamma,expenencial,poisson ,binomial,binomial negativa,weibell 
+
+Um estudo de regressão busca,essencialmente,associar uma variável **Y** (denominada variável dependente)a uma outra variável **X** (denominada variável explanatória ou variável independente ).
+
+
+
+## Partes de um MLG 
+
+
+(1) $Y_{i} \sim p(y | \theta)  \rightarrow E(y_{i}) = \mu_{i}$   
+  
+  
+(2) $n_{i} = g(\mu_{i})$
+
+  
+  
+(3) $n_{i} =  \beta_{0} + \beta_{1} *x_{I}$
+
+
+
+```{r,echo=FALSE}
+
+```
+
+
+
+
+```{python,echo=FALSE}
+# import warnings
+# warnings.filterwarnings("ignore")
+# 
+# 
+# from bs4 import BeautifulSoup
+# 
+# import requests
+# 
+# html = requests.get("https://www.climatempo.com.br/").content
+# 
+# soup = BeautifulSoup(html, 'html.parser')
+# 
+# print(soup.prettify())
+# 
+# 
+# temperatura = soup.find("span", class_="_block_margin-b-5 -gray")
+# 
+# 
+# soup.find("span")
+# print(temperatura.string)
+```
+
+
+
+
+```{python,echo=FALSE}
+# #importe a biblioteca usada para consultar uma URL
+# import urllib.request
+# 
+# #importe as funções BeautifulSoup para analisar os dados retornados do site
+# from bs4 import BeautifulSoup
+# 
+# #especifique o URL
+# wiki = "https://pt.wikipedia.org/wiki/Lista_de_capitais_do_Brasil"
+# 
+# #Consulte o site e retorne o html para a variável 'page'
+# page = urllib.request.urlopen(wiki)
+# 
+# #Parse o html na variável 'page' e armazene-o no formato BeautifulSoup
+# soup = BeautifulSoup(page, "html5lib")
+# 
+# #!pip install html5lib
+# !pip3 install lxml
+# !pip3 install  html5lib
+# 
+# soup = BeautifulSoup(page, features="xml")
+```
+```{python,echo=FALSE}
+# from requests_html import HTMLSession
+# 
+# 
+# session = HTMLSession()
+# 
+# #!pip  install requests_html
+# 
+# 
+# requisicao= session.get("https://globoesporte.globo.com/futebol/brasileirao-serie-a/")
+# 
+# nome_times = requisicao.html.find(".club-name--desktop")
+# 
+# pontos = requisicao.html.find(".points")
+# 
+# 
+# #print(nome_times[0].text)
+# #print(pontos[0].text)
+# 
+# for item in range(20):
+#   print(nome_times[item].text  + " " + pontos[item].text)
+```
+
+
+
+
+
+```{r}
+plot(iris)
+```
+
