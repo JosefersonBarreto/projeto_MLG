@@ -1,0 +1,541 @@
+---
+title:  <p style="text-align:center"><img src="https://www.infoescola.com/wp-content/uploads/2018/05/UEPB.png" width="1200" height="360" /></p>mlg_carros
+author: "joseferson da silva barreto"
+date: "2022-10-12"
+output:
+ html_document:
+    toc: true
+    toc_float: true
+    css: www/meu_cs.css
+---
+
+
+# Objetivo 
+
+Objetivo é executar uma analise afim de buscar relações entre as variáveis e conseguir um melhor ajuste  para fazer determinadas predições , para esta análise vamos utilizar o pacote RStanArm  e o software Rstúdio 
+
+
+# Metodologia
+
+para está análise utilizaremos  banco de dados **Automobile Data Set**   contendo informações relevantes sobre características dos carros 
+Variáveis:
+
+
+### Definindo o Problema de Negócio 
+
+
+Nosso objetivo é construir um modelo de regressão generalizado  que seja capaz de explicar  quais características influenciam na precificação do automovel. A variável a ser prevista é um valor numérico que representa o preço de cada automovel observado. Para cada automóvel temos diversas variáveis explanatórias. Sendo assim, podemos buscar resolver este problema utilizando  MLG.
+
+### Definindo o Dataset
+Este conjunto de dados consiste em dados do Anuário Automotivo da Ward de 1985. Aqui estão as fontes
+
+Fontes:
+
+1) 1985 Modelo de Importação de Carro e Especificações de Caminhão, Anuário Automotivo de 1985 Ward.
+2) Personal Auto Manuals, Insurance Services Office, 160 Water Street, Nova York, NY 10038
+3) Insurance Collision Report, Insurance Institute for Highway Safety, Watergate 600, Washington, DC 20037
+
+
+Esse conjunto de dados consiste em três tipos de entidades: (a) a especificação de um automóvel em termos de várias características, (b) sua classificação de risco de seguro atribuída, (c) suas perdas normalizadas em uso em comparação com outros carros. A segunda classificação corresponde ao grau em que o automóvel é mais arriscado do que seu preço indica. Os carros recebem inicialmente um símbolo de fator de risco associado ao seu preço. Então, se for mais arriscado (ou menos), esse símbolo é ajustado movendo-o para cima (ou para baixo) na escala. Os atuários chamam esse processo de "simbolização". Um valor de +3 indica que o automóvel é arriscado, -3 que provavelmente é bastante seguro.
+
+O terceiro fator é o pagamento de perda média relativa por ano de veículo segurado. Este valor é normalizado para todos os automóveis dentro de uma determinada classificação de tamanho (pequeno de duas portas, carrinhas, desporto/especialidade, etc…), e representa a perda média por automóvel por ano.
+
+Nota: Vários dos atributos no banco de dados podem ser usados ​​como um atributo de "classe".
+
+
+* total de variáveis: 25
+* total de observações :205
+
+
+
+
+
+
+# Introdução
+
+
+Os modelos  lineares  Generalizados são utilizados quando utilizar os modelos clássicos  que  pressupoem que os dados seguem uma distribuição  normal  e principalmente onde temos dados que segue uma base de dados discretos . O princípio do GLM é pegar uma família de distribuições  ao ínves de uma única distribuição  que no nosso caso será a famíla exponencial  , ou sejá , ao ínves de trabalhar apenas com a normal , trabalhamos com várias distribuições : gamma,expenencial,poisson ,binomial,binomial negativa,weibell 
+
+Um estudo de regressão busca,essencialmente,associar uma variável **Y** (denominada variável dependente)a uma outra variável **X** (denominada variável explanatória ou variável independente ).
+
+
+
+## Partes de um MLG 
+
+
+(1) $Y_{i} \sim p(y | \theta)  \rightarrow E(y_{i}) = \mu_{i}$   
+  
+  
+(2) $n_{i} = g(\mu_{i})$
+
+  
+  
+(3) $n_{i} =  \beta_{0} + \beta_{1} *x_{I}$
+
+
+# Conhecendo o Nossos Dados 
+
+
+## Análises  Descritivas 
+
+### Banco de Dados
+
+```{r}
+library(readr)
+dados <- read_csv("carrosTrat.csv", 
+    col_types = cols(stroke = col_double()))
+dados$price<-as.numeric(dados$price)
+head (dados)
+```
+
+
+
+### Dados Faltantes NA's
+
+```{r}
+round(mean(is.na(dados))*100,10)
+```
+
+ Tem a presença de 0.075% de dados faltantes, analisando onde ele se encontra:
+
+```{r}
+library(skimr)
+skim(dados)
+```
+
+Observe que os dados faltantes se encontram em  **STROKE** (derramamento de óleo), eles precisam ser tratados:
+
+```{r}
+dados[is.na(dados$stroke),]$stroke = median(dados$stroke,na.rm = T)
+```
+
+### Foi atribuido para cada valor faltante a sua mediana da coluna, agora poderá seguir com o restante da análise dos dados.
+
+### Histograma e Normalidade
+
+```{r}
+library(ggplot2)
+dados %>% ggplot(aes(price))+
+  geom_density(fill = "darkblue")+
+  labs(x= "Preço", y="Densidade")
+```
+
+ Observe que os dados de preço são assimétricos a esquerda.
+
+```{r}
+shapiro.test(dados$price)
+```
+
+ Pelo teste de normalidade univariada de Shapiro-Wilk, o valor deu menor que 0.05, então os dados de preço não seguem a normalidade dos resíduos.
+
+```{r}
+library(skimr)
+skim(dados)
+```
+
+## Análise Exploratória 
+
+O ponta pé  inicial de qualquer análise é a análise exploratória, com ela começas a entender a grandeza dos nossos dados e os seus comportamentos, dessa forma,  vamos carregar os pacotes necessários e executar a análise exploratória: 
+
+```{r,warning=FALSE,message=FALSE}
+library(tidyverse)
+library(DT)
+library(readxl)
+
+
+dados<-read.table("dados.txt",sep = ",",header = TRUE)
+
+
+
+
+
+
+
+
+```
+
+ Vamos verificar se nosso conjunto de dados pussui valores ausentes, caso tenhamos, teremos  que remover essas observações
+ 
+ 
+```{r}
+sum(dados[!complete.cases(dados),])
+```
+ 
+ Como podemos ver o nosso conjunto de dados não apresentou nenhum valor faltante, logo, podemos prosseguir da forma que está.
+ 
+ 
+###  Observando a Grandeza dos  Nossos Dados 
+
+Para verificar a grandeza dos nossos dados vamos utilizar o seguinte comando:
+```{r}
+glimpse(dados)
+```
+
+
+ Como podemos ver  a maioria das variáveis não estão no formato adequado,vamos ter que
+ converte-las  para fatores as que são referentes a fatores e numericos a referente a valores númericos
+ 
+ 
+ 
+ 
+### Transformações de Variáveis 
+
+Vamos utilizar a função **mutate_if** para colocar a condição de transformação das colunas, por exemplo , no primeiro código abaixo  as culanas de dados da coluna 3 a coluna 9  que são do tipo character serão convertidas para factor , os demais códigos abaixo seguem as mesmas linhas de raciocínio.
+
+```{r,warning=FALSE,message=FALSE}
+dados[3:9]<-dados[3:9] %>% mutate_if(is.character,as.factor)
+  
+dados[15:16]<-dados[15:16] %>% mutate_if(is.character,as.factor) 
+  
+ 
+
+dados[18]<-dados[18] %>% mutate_if(is.character,as.factor)  
+
+
+dados[20]<-dados[20] %>% mutate_if(is.character,as.factor) 
+
+
+
+dados<-dados %>% mutate_if(is.character,as.numeric)
+```
+
+Vamos observar os nossos dados 
+
+```{r,warning=FALSE,message=FALSE,out.width=200,out.height=400}
+library(gt)
+# dados |> datatable(
+#           rownames = FALSE,
+#           options = list(
+#             columnDefs = list(list(className = 'dt-center', targets = 0:4))
+#             )
+#           )
+
+
+
+
+
+
+dados |> head(10) |> gt()
+```
+
+
+Podemos perceber que após as transformações temos a presença de valores ausentes,teremos que tratar esses valores ausentes 
+
+
+### Trantando valores ausentes nas variáveis númericas 
+```{r}
+
+
+# symboling é fator ,mas vai permanecer como númerica   
+
+
+# subiistituindo os valores ausentes pelo valor mediano 
+
+dados[is.na(dados$normalized.losses),]$normalized.losses =median(dados$normalized.losses,na.rm = T)
+
+dados[is.na(dados$price),]$price = median(dados$price,na.rm = T)
+
+
+dados$stroke<-as.numeric(dados$stroke)
+
+#dados[is.na(dados$stroke),]$stroke = median(dados$stroke,na.rm = T)
+
+
+dados[is.na(dados$bore),]$bore = median(dados$bore,na.rm = T)
+#dados[is.na(dados$compression.ratio),]$compression.ratio = median(dados$compression.ratio,na.rm = T)
+dados[is.na(dados$horsepower),]$horsepower= median(dados$horsepower,na.rm = T)
+
+dados[is.na(dados$peak.rpm),]$peak.rpm= median(dados$peak.rpm,na.rm = T)
+
+
+
+
+```
+
+
+### Verificando se Ainda temos Algum Valor Ausente 
+
+```{r}
+
+colnms <- colnames(dados)
+
+# filter
+teste<-dados %>%
+  filter_at(vars(all_of(colnms)), any_vars(is.na(.)))
+
+sum(teste)
+```
+ Como podemos ver não temos mais a presença de valores ausentes, podemos prosseguir. 
+
+Vamos observar novamente nossos dados 
+
+```{r,warning=FALSE,message=FALSE,out.width=200,out.height=400}
+library(gt)
+# dados |> datatable(
+#           rownames = FALSE,
+#           options = list(
+#             columnDefs = list(list(className = 'dt-center', targets = 0:4))
+#             )
+#           )
+
+
+
+
+
+
+dados |> head(10) |> gt()
+```
+
+### Vendo as Correlações das Variáveis Númericas 
+
+Problemas de multicolinearidade são muitos comuns em modelos de regressão,isso acaba prejudicando o modelo, devido a este fato  vamos verificar a correção entre as variáveis preditoras, e depois vamos verificar quais variaveis remover, para verificar a correlação vamos executar  o gráfico de correlação  de pearson  através do comando abaixo:
+
+```{r}
+
+library(corrplot)
+par(bg = '#586573')
+dados[-26] |>
+  dplyr::select(where(is.numeric))  |>
+  cor( ) |>
+corrplot::corrplot( type = "upper")
+```
+
+
+Como podemos ver várias colunas apresentaram correlação,logo  teremos que remove-lás 
+
+
+
+### Verificando Presença de Multicolinearidade das Variáveis Númericas 
+
+
+```{r,warning=FALSE,message=FALSE}
+library(caret)
+
+t<-dados[-26] |>
+  dplyr::select(where(is.numeric)) 
+
+ t %>%
+  cor() %>%
+  findCorrelation( cutoff = .50, verbose = FALSE)
+```
+
+Logo, essas as variáveis cotadas para remoção ,mas antes disso vamos ver se temos colunas 
+com repetidas
+
+
+### Verificando se Temos Colunas Identicas 
+
+```{r,warning=FALSE,message=FALSE}
+t %>%
+  cor() %>%  findLinearCombos ()
+
+```
+Como podemos ver não temos colunas repetidas , vamos remover as colunas sugeridas 
+
+
+```{r,warning=FALSE,message=FALSE}
+t<-dados |>
+  dplyr::select(where(is.numeric))  
+   
+
+novo<-t %>% 
+  dplyr::select(normalized.losses,compression.ratio,horsepower,peak.rpm,price )
+
+nov1<-dados |>
+  dplyr::select(where(is.factor))  
+
+
+#unido os dados 
+
+# novo<-cbind(nov1,novo)
+# 
+# glimpse(novo)
+# novo<-novo |>
+#   dplyr::filter(make !="?" , fuel.type !="?",aspiration  !="?" ,
+#                 num.of.doors !="?", engine.type !="l")
+
+
+write.csv(novo,"carros2Trat.csv",row.names = F)
+```
+
+Agora podemos proseguir para criação do nosso modelo 
+
+
+
+
+# Criando o Modelo MLG
+ O primeiro modelo irá receber todas as variáveis , o segundo  modelo recebera as variaveis selecionadas , os demais modelos serão adicionando as variáveis um a um . fazendo os modelos 
+
+```{r,warning=FALSE,message=FALSE}
+# nv<- novo[11:16]
+# 
+mod<-glm(price~.,family = Gamma(link=log),data = t)
+
+# modelo com as variaveis selecionadas 
+mod2<-glm(price~.,family = Gamma(link=log),data = novo)
+summary(mod)
+```
+
+Para determinar o melhor modelo vamos utilizar o critério informação  de Akaike  que é uma métrica que mensura a qualidade de um modelo estatístico visando também a sua simplicidade. Fornece, portanto, uma métrica para comparação e seleção de modelos, em que menores valores de AIC representam uma maior qualidade e simplicidade, segundo este critério.
+
+
+```{r,warning=FALSE,message=FALSE}
+mod2<-glm(price~.,family = Gamma(link=log),data = novo)
+summary(mod2)
+```
+
+
+```{r,warning=FALSE,message=FALSE}
+mod3<-glm(price~horsepower+peak.rpm,family = Gamma(link=log),data = novo)
+  
+summary(mod3)
+```
+
+
+```{r,warning=FALSE,message=FALSE}
+mod4<-glm(price~normalized.losses+horsepower+peak.rpm,family = Gamma(link=log),data = novo)
+  
+summary(mod4)
+```
+
+
+```{r,warning=FALSE,message=FALSE,echo=FALSE}
+# 
+# novo$make<-factor(novo$make,levels = c(unique(novo$make)),labels = c(1:21))
+# novo$fuel.type<-factor(novo$fuel.type,levels = c(unique(novo$fuel.type)),labels = c(1:2))
+# #novo$make<-factor(novo$aspiration,levels = c(unique(novo$aspiration.type)),labels = c(1:2))
+# 
+# novo$num.of.doors <-factor(novo$num.of.doors,levels = c(unique(novo$num.of.doors)),labels = c(1:2))
+# novo$body.style<-factor(novo$body.style,levels = c(unique(novo$body.style)),labels = c(1:5))
+#  novo$drive.wheels<-  factor(novo$drive.wheels,levels = c(unique(novo$drive.wheels)),labels = c(1:3))
+#  
+#  library(dplyr)
+#  
+#  test<- novo |> dplyr:: select(make,num.of.doors,body.style,
+#                        drive.wheels,symboling,normalized.losses,
+#                        compression.ratio,horsepower,peak.rpm,
+#                        price)
+#  
+#  test<- test %>% mutate_if(is.factor,as.numeric) 
+ 
+ 
+ 
+ # glimpse(test)
+```
+
+
+## Verificando a Importancia das Variáveis para o Modelo
+
+Vamos verificar quais variáveis são mais importantes para o modelo , para isso vamos utilizar o pacote e os comandos abaixo:
+
+```{r,warning=FALSE,message=FALSE}
+
+library(randomForest)
+importancia  = randomForest(price ~ ., data = t)
+
+col = importance(importancia)
+options(scipen=999) 
+varImpPlot(importancia)
+```
+
+ Podemos perceber  que uma das variáveis removidas anteriormente  **engine.size** (cilindradas do motor) possui a maior importância 
+ para o modelo , logo,vamos tentar ajustar um modelo com esssa covariável
+ 
+ 
+ 
+```{r,warning=FALSE,message=FALSE}
+t2<-t %>% 
+  dplyr::select(engine.size,curb.weight,horsepower,highway.mpg,city.mpg,length ,price)
+cor(t2)
+
+# modelo sugerido 1
+yu<-glm(price~engine.size+highway.mpg+length , family = Gamma(link=log),data = t2)
+summary(yu)
+```
+
+
+```{r,warning=FALSE,message=FALSE}
+# modelo sugerido 2 
+yu2<-glm(price~curb.weight+length , family = Gamma(link=log),data = t2)
+
+summary(yu2)
+```
+
+### Modelo Binomial Negativo 
+
+```{r,warning=FALSE,message=FALSE}
+require(MASS)
+mod.nb <- glm.nb(price~., data = novo)
+
+summary(mod.nb)
+```
+
+
+
+
+```{r,warning=FALSE,message=FALSE}
+# modelo sugerido 2 
+yu2<-glm(price~curb.weight+length , family = Gamma(link=log),data = t2)
+
+summary(yu2)
+```
+
+
+
+
+##  Tabela  de modelos
+```{r,warning=FALSE,message=FALSE}
+library(hnp)
+
+ajuste = c('mod', 'mod2','mod3','mod4','yu','yu2','mod.nb')
+aic    = c(AIC(mod),AIC(mod2),AIC(mod3),AIC(mod4),AIC(yu),AIC(yu2),AIC(mod.nb))
+deviance    = c(deviance(mod),deviance(mod2),deviance(mod3),deviance(mod4),deviance(yu),deviance(yu2),deviance(mod.nb))
+#verossimilhanca = c(logLik(glmod1),logLik(glmod2),logLik(glmod3))
+df<-data.frame(ajuste, round(aic,2),round(deviance,2)) 
+colnames(df)=c("ajuste","AIC","Deveiance")
+
+df%>% datatable()
+
+
+```
+
+
+Como podemos ver  pelo O critério de informação de Akaike (AIC) e o deviance, o modelo que apresentou os melhores resultados segundo os critérios foi o modelo yu, que o modelo que contem variáveis removidas anteriormente,entretanto ao verificar o gráfico de envelope simulado normalmente distribuído para os resíduos, notamos que temos vários pontos fora do envelope, logo mesmo o  critério de Akaike (AIC) e o deviance sendo o mais baixo, o modelo aparenta não ser o mais indicado 
+
+
+```{r,warning=FALSE,message=FALSE}
+hnp(yu$residuals, sim = 99,resid.type ='deviance',how.many.out=T ,
+    conf = 0.95,scale = T)
+
+
+hnp(mod.nb$residuals, sim = 99,resid.type ='deviance',how.many.out=T ,
+    conf = 0.95,scale = T)
+```
+
+Como podemos observar de fato temos vários pontos fora do envelope, com isso o segundo modelo  que apresentou as melhores métricas será o modelo escolhido, vamos fazer a verificação do envelope 
+
+
+
+
+
+```{r,warning=FALSE,message=FALSE}
+# mod<-glm(test$price~.,family = Gamma(link=log),data = test)
+ 
+ summary(mod2)
+library('hnp')
+hnp(mod2$residuals, sim = 99,resid.type ='deviance',how.many.out=T ,
+    conf = 0.95,scale = T)
+
+
+
+# hnp(yu, sim = 99,resid.type ='deviance',how.many.out=T ,
+#     conf = 0.95,scale = T)
+
+```
+
+
+
+
+
+
+
