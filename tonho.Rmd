@@ -1,15 +1,3 @@
----
-title: <p style="text-align:center"><img src="https://www.infoescola.com/wp-content/uploads/2018/05/UEPB.png" width="1200" height="360" /></p> Modelos Lineares Generalizados
-author: "Joseferson da Silva barreto e Antonio Victor"
-date: "2022-09-30"
-output:
- html_document:
-    toc: true
-    toc_float: true
-    css: www/meu_cs.css
----
-
-
 
 # Objetivo 
 
@@ -346,7 +334,6 @@ aictab(cand.set = models, modnames = mod.names)
 
 
 aictab()
-
 
 Model selection based on AICc:
 # modelo_NB <- gamlss(

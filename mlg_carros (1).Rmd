@@ -1,6 +1,6 @@
 ---
-title:  <p style="text-align:center"><img src="https://www.infoescola.com/wp-content/uploads/2018/05/UEPB.png" width="1200" height="360" /></p> Modelos Lineares Generalizados(MLG)
-author: "joseferson da silva barreto e Antonio"
+title:  <p style="text-align:center"><img src="https://www.infoescola.com/wp-content/uploads/2018/05/UEPB.png" width="1200" height="360" /></p>mlg_carros
+author: "joseferson da silva barreto"
 date: "2022-10-12"
 output:
  html_document:
@@ -55,20 +55,24 @@ Nota: Vários dos atributos no banco de dados podem ser usados como um atributo 
 
 
 ```{r,echo=FALSE,out.height=400,out.width=600,fig.align = 'center'}
-knitr::include_graphics("Lamborghini-Urus-Performante-1.png")
+#knitr::include_graphics("Lamborghini-Urus-Performante-1.png")
 
 
 ```
 
-  
-  O primeiro meio de transporte a fazer uso de um motor a gasolina para se locomover foi um automóvel que continha somente três rodas e foi criado no ano de 1885 por um alemão de nome Karl Benz.A partir de então teve início a corrida pela produção e venda de automóveis, iniciada por uma empresa francesa conhecida pelo nome de Panhard et Levassor. No ano de 1892, o conhecido Henry Ford fabricou seu primeiro carro, o Ford, na América do Norte.Estima-se que a quantidade  de autóveis no Brasil já ultrapassa a casa dos  11 milhões de veículos,  segundo o senado, Dados da Secretaria Nacional de Trânsito do Ministério da Infraestrutura indicam haver mais de 3,5 milhões de caminhões em circulação no Brasil e, desse total, cerca de 26% dos veículos possuem mais de 30 anos de fabricação, a expectativa é que esse número aumente ainda mais nós próximos anos. Neste material  buscaremos criar um modelo capaz de explicar quais fatores influenciar no preço do automóvel, para este fim sera utilizado os modelos lineares generalizados.  
 
-   Os modelos  lineares  Generalizados são utilizados quando utilizar os modelos clássicos  que  pressupoem que os dados seguem uma distribuição  normal  e principalmente onde temos dados que segue uma base de dados discretos . O princípio do GLM é pegar uma família de distribuições  ao ínves de uma única distribuição  que no nosso caso será a famíla exponencial  , ou sejá , ao ínves de trabalhar apenas com a normal , trabalhamos com várias distribuições : gamma,expenencial,poisson ,binomial,binomial negativa,weibell.
+O primeiro meio de transporte a fazer uso de um motor a gasolina para se locomover foi um automóvel que continha somente três rodas e foi criado no ano de 1885 por um alemão de nome Karl Benz.A partir de então teve início a corrida pela produção e venda de automóveis, iniciada por uma empresa francesa conhecida pelo nome de Panhard et Levassor. No ano de 1892, o conhecido Henry Ford fabricou seu primeiro carro, o Ford, na América do Norte.Estima-se que a quantidade  de autóveis no Brasil já ultrapassa a casa dos  11 milhões de veículos,  segundo o senado, Dados da Secretaria Nacional de Trânsito do Ministério da Infraestrutura indicam haver mais de 3,5 milhões de caminhões em circulação no Brasil e, desse total, cerca de 26% dos veículos possuem mais de 30 anos de fabricação. 
+
+
+
+
+Os modelos  lineares  Generalizados são utilizados quando utilizar os modelos clássicos  que  pressupoem que os dados seguem uma distribuição  normal  e principalmente onde temos dados que segue uma base de dados discretos . O princípio do GLM é pegar uma família de distribuições  ao ínves de uma única distribuição  que no nosso caso será a famíla exponencial  , ou sejá , ao ínves de trabalhar apenas com a normal , trabalhamos com várias distribuições : gamma,expenencial,poisson ,binomial,binomial negativa,weibell 
+
 Um estudo de regressão busca,essencialmente,associar uma variável **Y** (denominada variável dependente)a uma outra variável **X** (denominada variável explanatória ou variável independente ).
 
 
 
-## Partes de Um MLG 
+## Partes de um MLG 
 
 
 (1) $Y_{i} \sim p(y | \theta)  \rightarrow E(y_{i}) = \mu_{i}$   
@@ -202,7 +206,7 @@ dados[18]<-dados[18] %>% mutate_if(is.character,as.factor)
 
 dados[20]<-dados[20] %>% mutate_if(is.character,as.factor) 
 
-dados$compression.ratio[dados$compression.ratio == "?"] <- "NA"
+
 
 dados<-dados %>% mutate_if(is.character,as.numeric)
 ```
@@ -244,21 +248,12 @@ dados[is.na(dados$normalized.losses),]$normalized.losses =median(dados$normalize
 dados[is.na(dados$price),]$price = median(dados$price,na.rm = T)
 
 
-dados$stroke[dados$stroke == "?"] <- "NA"
-
-
 dados$stroke<-as.numeric(dados$stroke)
 
-dados[is.na(dados$stroke),]$stroke = median(dados$stroke,na.rm = T)
+#dados[is.na(dados$stroke),]$stroke = median(dados$stroke,na.rm = T)
 
 
 dados[is.na(dados$bore),]$bore = median(dados$bore,na.rm = T)
-
-#dados$compression.ratio[dados$compression.ratio == "?"] <- "NA"
-
-
-
-dados$compression.ratio<-as.double(dados$compression.ratio)
 #dados[is.na(dados$compression.ratio),]$compression.ratio = median(dados$compression.ratio,na.rm = T)
 dados[is.na(dados$horsepower),]$horsepower= median(dados$horsepower,na.rm = T)
 
@@ -331,7 +326,7 @@ library(caret)
 t<-dados[-26] |>
   dplyr::select(where(is.numeric)) 
 
- t[-1] %>%
+ t %>%
   cor() %>%
   findCorrelation( cutoff = .50, verbose = FALSE)
 ```
@@ -343,7 +338,7 @@ com repetidas
 ### Verificando se Temos Colunas Identicas 
 
 ```{r,warning=FALSE,message=FALSE}
-t[-1] %>%
+t %>%
   cor() %>%  findLinearCombos ()
 
 ```
@@ -351,10 +346,9 @@ Como podemos ver não temos colunas repetidas , vamos remover as colunas sugerid
 
 
 ```{r,warning=FALSE,message=FALSE}
-t<-dados[-1] |>
+t<-dados |>
   dplyr::select(where(is.numeric))  
    
-glimpse(t)
 
 novo<-t %>% 
   dplyr::select(normalized.losses,compression.ratio,horsepower,peak.rpm,price )
@@ -391,10 +385,7 @@ mod<-glm(price~.,family = Gamma(link=log),data = t)
 
 # modelo com as variaveis selecionadas 
 mod2<-glm(price~.,family = Gamma(link=log),data = novo)
-summary(mod2)
-
-
-mod2<-glm(price~ novo$,family = Gamma(link=log),data = novo)
+summary(mod)
 ```
 
 Para determinar o melhor modelo vamos utilizar o critério informação  de Akaike  que é uma métrica que mensura a qualidade de um modelo estatístico visando também a sua simplicidade. Fornece, portanto, uma métrica para comparação e seleção de modelos, em que menores valores de AIC representam uma maior qualidade e simplicidade, segundo este critério.

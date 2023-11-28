@@ -4,7 +4,7 @@ body {
     line-height: 1.42857143;
     color: #000;
     /*background-color: #00ffa724;*/
-    background-color: #586573;
+    background-color: #5689c1;
 }
 
 .hljs-comment {
@@ -24,7 +24,7 @@ body {
     font: 1rem Consolas,"Liberation Mono",Menlo,Courier,monospace;
     color: #567482;
     word-wrap: normal;
-    background-color: #f3f6fa;
+    background-color: #4b78a9;
     border: solid 4px #33516f;
     border-radius: .3rem;
     line-height: 1.45;

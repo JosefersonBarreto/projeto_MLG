@@ -1,6 +1,6 @@
 ---
-title:  <p style="text-align:center"><img src="https://www.infoescola.com/wp-content/uploads/2018/05/UEPB.png" width="1200" height="360" /></p> Modelos Lineares Generalizados(MLG)
-author: "joseferson da silva barreto e Antonio"
+title:  <p style="text-align:center"><img src="https://www.infoescola.com/wp-content/uploads/2018/05/UEPB.png" width="1200" height="360" /></p>Modelos Lineares Generalizados(MLG)
+author: "joseferson da silva barreto e Antônio Victor Alves Silva "
 date: "2022-10-12"
 output:
  html_document:
@@ -43,10 +43,8 @@ O terceiro fator é o pagamento de perda média relativa por ano de veículo seg
 Nota: Vários dos atributos no banco de dados podem ser usados como um atributo de "classe".
 
 
-* total de variáveis: 25
+* total de variáveis: 26
 * total de observações :205
-
-
 
 
 
@@ -68,7 +66,7 @@ Um estudo de regressão busca,essencialmente,associar uma variável **Y** (denom
 
 
 
-## Partes de Um MLG 
+## Partes de um MLG 
 
 
 (1) $Y_{i} \sim p(y | \theta)  \rightarrow E(y_{i}) = \mu_{i}$   
@@ -202,7 +200,7 @@ dados[18]<-dados[18] %>% mutate_if(is.character,as.factor)
 
 dados[20]<-dados[20] %>% mutate_if(is.character,as.factor) 
 
-dados$compression.ratio[dados$compression.ratio == "?"] <- "NA"
+
 
 dados<-dados %>% mutate_if(is.character,as.numeric)
 ```
@@ -244,21 +242,12 @@ dados[is.na(dados$normalized.losses),]$normalized.losses =median(dados$normalize
 dados[is.na(dados$price),]$price = median(dados$price,na.rm = T)
 
 
-dados$stroke[dados$stroke == "?"] <- "NA"
-
-
 dados$stroke<-as.numeric(dados$stroke)
 
-dados[is.na(dados$stroke),]$stroke = median(dados$stroke,na.rm = T)
+#dados[is.na(dados$stroke),]$stroke = median(dados$stroke,na.rm = T)
 
 
 dados[is.na(dados$bore),]$bore = median(dados$bore,na.rm = T)
-
-#dados$compression.ratio[dados$compression.ratio == "?"] <- "NA"
-
-
-
-dados$compression.ratio<-as.double(dados$compression.ratio)
 #dados[is.na(dados$compression.ratio),]$compression.ratio = median(dados$compression.ratio,na.rm = T)
 dados[is.na(dados$horsepower),]$horsepower= median(dados$horsepower,na.rm = T)
 
@@ -331,9 +320,10 @@ library(caret)
 t<-dados[-26] |>
   dplyr::select(where(is.numeric)) 
 
- t[-1] %>%
+ t %>%
   cor() %>%
   findCorrelation( cutoff = .50, verbose = FALSE)
+ 
 ```
 
 Logo, essas as variáveis cotadas para remoção ,mas antes disso vamos ver se temos colunas 
@@ -343,7 +333,7 @@ com repetidas
 ### Verificando se Temos Colunas Identicas 
 
 ```{r,warning=FALSE,message=FALSE}
-t[-1] %>%
+t %>%
   cor() %>%  findLinearCombos ()
 
 ```
@@ -351,10 +341,9 @@ Como podemos ver não temos colunas repetidas , vamos remover as colunas sugerid
 
 
 ```{r,warning=FALSE,message=FALSE}
-t<-dados[-1] |>
+t<-dados |>
   dplyr::select(where(is.numeric))  
    
-glimpse(t)
 
 novo<-t %>% 
   dplyr::select(normalized.losses,compression.ratio,horsepower,peak.rpm,price )
@@ -389,34 +378,39 @@ Agora podemos proseguir para criação do nosso modelo
 # 
 mod<-glm(price~.,family = Gamma(link=log),data = t)
 
-# modelo com as variaveis selecionadas 
-mod2<-glm(price~.,family = Gamma(link=log),data = novo)
-summary(mod2)
 
 
-mod2<-glm(price~ novo$,family = Gamma(link=log),data = novo)
+summary(mod)
 ```
 
 Para determinar o melhor modelo vamos utilizar o critério informação  de Akaike  que é uma métrica que mensura a qualidade de um modelo estatístico visando também a sua simplicidade. Fornece, portanto, uma métrica para comparação e seleção de modelos, em que menores valores de AIC representam uma maior qualidade e simplicidade, segundo este critério.
 
 
 ```{r,warning=FALSE,message=FALSE}
-mod2<-glm(price~.,family = Gamma(link=log),data = novo)
+#mod2<-glm(price~ compression.ratio+horsepower+peak.rpm,family = Gamma(link=log),data = novo)
+# modelo com as variaveis selecionadas 
+mod2<-glm(price~normalized.losses+compression.ratio+horsepower+peak.rpm
+          ,family = Gamma(link=log),data = novo)
 summary(mod2)
 ```
 
 
 ```{r,warning=FALSE,message=FALSE}
-mod3<-glm(price~horsepower+peak.rpm,family = Gamma(link=log),data = novo)
+mod3<-glm(price~horsepower+peak.rpm+compression.ratio ,family = Gamma(link=log),data = novo)
   
 summary(mod3)
+
+
+
+  
+
 ```
 
 
 ```{r,warning=FALSE,message=FALSE}
-mod4<-glm(price~normalized.losses+horsepower+peak.rpm,family = Gamma(link=log),data = novo)
+#mod4<-glm(price~compression.ratio+horsepower+peak.rpm,family = Gamma(link=log),data = novo)
   
-summary(mod4)
+#summary(mod4)
 ```
 
 
@@ -456,6 +450,7 @@ importancia  = randomForest(price ~ ., data = t)
 
 col = importance(importancia)
 options(scipen=999) 
+par(bg = '#586573')
 varImpPlot(importancia)
 ```
 
@@ -467,7 +462,7 @@ varImpPlot(importancia)
 ```{r,warning=FALSE,message=FALSE}
 t2<-t %>% 
   dplyr::select(engine.size,curb.weight,horsepower,highway.mpg,city.mpg,length ,price)
-
+cor(t2)
 
 # modelo sugerido 1
 yu<-glm(price~engine.size+highway.mpg+length , family = Gamma(link=log),data = t2)
@@ -508,9 +503,9 @@ summary(yu2)
 ```{r,warning=FALSE,message=FALSE}
 library(hnp)
 
-ajuste = c('mod', 'mod2','mod3','mod4','yu','yu2','mod.nb')
-aic    = c(AIC(mod),AIC(mod2),AIC(mod3),AIC(mod4),AIC(yu),AIC(yu2),AIC(mod.nb))
-deviance    = c(deviance(mod),deviance(mod2),deviance(mod3),deviance(mod4),deviance(yu),deviance(yu2),deviance(mod.nb))
+ajuste = c('mod', 'mod2','mod3','yu','yu2','mod.nb')
+aic    = c(AIC(mod),AIC(mod2),AIC(mod3),AIC(yu),AIC(yu2),AIC(mod.nb))
+deviance    = c(deviance(mod),deviance(mod2),deviance(mod3),deviance(yu),deviance(yu2),deviance(mod.nb))
 #verossimilhanca = c(logLik(glmod1),logLik(glmod2),logLik(glmod3))
 df<-data.frame(ajuste, round(aic,2),round(deviance,2)) 
 colnames(df)=c("ajuste","AIC","Deveiance")
@@ -521,19 +516,32 @@ df%>% datatable()
 ```
 
 
-Como podemos ver  pelo O critério de informação de Akaike (AIC) e o deviance, o modelo que apresentou os melhores resultados segundo os critérios foi o modelo yu, que o modelo que contem variáveis removidas anteriormente,entretanto ao verificar o gráfico de envelope simulado normalmente distribuído para os resíduos, notamos que temos vários pontos fora do envelope, logo mesmo o  critério de Akaike (AIC) e o deviance sendo o mais baixo, o modelo aparenta não ser o mais indicado 
+Como podemos ver  pelo O critério de informação de Akaike (AIC) e o deviance, o modelo que apresentou os melhores resultados segundo os critérios foi o modelo **mod**, que o modelo que contem variáveis removidas anteriormente,entretanto ao verificar o gráfico de envelope simulado normalmente distribuído para os resíduos, notamos que temos vários pontos fora do envelope, logo mesmo o  critério de Akaike (AIC) e o deviance sendo o mais baixo, o modelo aparenta não ser o mais indicado 
 
 
 ```{r,warning=FALSE,message=FALSE}
-hnp(yu$residuals, sim = 99,resid.type ='deviance',how.many.out=T ,
-    conf = 0.95,scale = T)
-
-
-hnp(mod.nb$residuals, sim = 99,resid.type ='deviance',how.many.out=T ,
-    conf = 0.95,scale = T)
+set.seed(1234)
+par(bg = '#586573')
+hnp(mod$residuals, sim = 99,resid.type ='deviance',how.many.out=T ,conf = 0.95,scale = T)
 ```
 
-Como podemos observar de fato temos vários pontos fora do envelope, com isso o segundo modelo  que apresentou as melhores métricas será o modelo escolhido, vamos fazer a verificação do envelope 
+
+Como podemos observar de fato temos vários pontos fora do envelope, com isso o vamos observar os outros modelos   vamos fazer a verificação do envelope  para o modelo 2
+
+
+ Verificando o envelope do modelo 3 
+```{r,warning=FALSE,message=FALSE}
+set.seed(1234)
+par(bg = '#586573')
+hnp(mod3$residuals, sim = 99,resid.type ='deviance',how.many.out=T ,conf = 0.95,scale = T)
+```
+
+
+
+
+
+
+
 
 
 
@@ -544,11 +552,90 @@ Como podemos observar de fato temos vários pontos fora do envelope, com isso o 
  
  summary(mod2)
 library('hnp')
+set.seed(1234)
+par(bg = '#586573')
 hnp(mod2$residuals, sim = 99,resid.type ='deviance',how.many.out=T ,
     conf = 0.95,scale = T)
 
 
 
+# hnp(yu, sim = 99,resid.type ='deviance',how.many.out=T ,
+#     conf = 0.95,scale = T)
+
+```
+
+podemos ver que os  resídeuos do segundo modelo ficou  bem envelopado,sendo um bom ajuste caso não tenhamos outra escolha.Como nós já ajustamos o modelo binomial negativo vamos comparar seu gráfico de envelope simulado para os resíduos: 
+
+
+
+
+```{r,warning=FALSE,message=FALSE}
+set.seed(1234)
+par(bg = '#586573')
+hnp(mod.nb$residuals, sim = 99,resid.type ='deviance',how.many.out=T ,
+    conf = 0.95,scale = T)
+```
+
+Como podemos ver o modelo binomial negativo também aparenta um bom ajuste pelo gráfico de envelope ,logo, vamos comparar o AIC e o deviance desses  modelos para decidir qual será o modelo final 
+
+```{r,warning=FALSE,message=FALSE}
+ajuste = c('mod2','mod3','mod.nb')
+aic    = c(AIC(mod2),AIC(mod3),AIC(mod.nb))
+deviance    = c(deviance(mod2),deviance(mod3),deviance(mod.nb))
+#verossimilhanca = c(logLik(glmod1),logLik(glmod2),logLik(glmod3))
+df<-data.frame(ajuste, round(aic,2),round(deviance,2)) 
+colnames(df)=c("ajuste","AIC","Deveiance")
+
+df%>% datatable()
+```
+
+Podemos observar que o modelo **mod2** aparenta ser o  melhor deviance,vamos observar o Rsquad
+
+
+
+### Comparando o R2
+```{r,eval=FALSE}
+#install.packages('DescTools')
+library(DescTools)
+PseudoR2(mod2)
+PseudoR2(mod3)
+PseudoR2(mod.nb)
+
+
+ajuste = c('mod2','mod3','mod.nb')
+R2    = c(PseudoR2(mod2),
+PseudoR2(mod3),
+PseudoR2(mod.nb))
+
+#verossimilhanca = c(logLik(glmod1),logLik(glmod2),logLik(glmod3))
+df<-data.frame(ajuste, round(R2,4)) 
+colnames(df)=c("modelos","R2")
+```
+
+
+```{r,echo=FALSE}
+write.csv(df,"R2.csv",row.names = F)
+```
+
+
+```{r,echo=FALSE}
+r2 <- read.csv('R2.csv')
+
+r2 %>% datatable()
+
+
+
+```
+  fazendo a  comaparação dos R2 percebemos que o único modelo capaz de  explicar ao menos 70%  da variabilidade presente em nossa variável de interesse  é o modelo binomial negtaivo. 
+
+# Conclusão 
+
+Como podemos ver mesmo o modelo **mod** sendo o melhor qualificado nas metricas do critério de informação de Akaique e na Deviance o grafico de envelope dos resíduos apresentou varios pontos  fora do envelope, logo, não é o modelo mais indicado para explicar nossa variável de interesse,sendo assim escolhemos o modelo **binomial negativo** embora não tenha apresentado o melhor AIC nem a melhor deviance  pussui o melhor R2, sendo assim o melhor modelo para explicar o preço dos carros. 
+
+## Exibindo os Coeficientes do Nosso Modelo 
+
+```{r}
+mod.nb$coefficients
 ```
 
 
@@ -567,3 +654,5 @@ Insurance Collision Report, Insurance Institute for Highway Safety, Watergate 60
 
  dados veículos- IBGE ,acessado em  09/10/2022
  <https://cidades.ibge.gov.br/brasil/pesquisa/22/28120>
+
+

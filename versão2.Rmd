@@ -1,18 +1,18 @@
 ---
-title:  <p style="text-align:center"><img src="https://www.infoescola.com/wp-content/uploads/2018/05/UEPB.png" width="1200" height="360" /></p> Modelos Lineares Generalizados(MLG)
-author: "joseferson da silva barreto e Antonio"
+title:  <a style="text-align:center"><img src="https://www.infoescola.com/wp-content/uploads/2018/05/UEPB.png" width="1200" height="360" /></a>Modelos Lineares Generalizados(MLG) <p />
+author: "joseferson da silva barreto e Antônio Victor Alves Silva "
 date: "2022-10-12"
 output:
  html_document:
     toc: true
     toc_float: true
-    css: www/meu_cs.css
+    css: www/meu_cs01.css
 ---
 
 
 # Objetivo 
 
-Objetivo é executar uma analise afim de buscar relações entre as variáveis e conseguir um melhor ajuste  para fazer determinadas predições , para esta análise vamos utilizar o pacote RStanArm  e o software Rstúdio 
+Objetivo é executar uma analise a fim de buscar relações entre as variáveis e conseguir um melhor ajuste  para fazer determinadas predições , para esta análise vamos utilizar o pacote RStanArm  e o software Rstúdio 
 
 
 # Metodologia
@@ -43,10 +43,8 @@ O terceiro fator é o pagamento de perda média relativa por ano de veículo seg
 Nota: Vários dos atributos no banco de dados podem ser usados como um atributo de "classe".
 
 
-* total de variáveis: 25
+* total de variáveis: 26
 * total de observações :205
-
-
 
 
 
@@ -68,7 +66,7 @@ Um estudo de regressão busca,essencialmente,associar uma variável **Y** (denom
 
 
 
-## Partes de Um MLG 
+## Partes de um MLG 
 
 
 (1) $Y_{i} \sim p(y | \theta)  \rightarrow E(y_{i}) = \mu_{i}$   
@@ -84,63 +82,6 @@ Um estudo de regressão busca,essencialmente,associar uma variável **Y** (denom
 # Conhecendo o Nossos Dados 
 
 
-## Análises  Descritivas 
-
-### Banco de Dados
-
-```{r}
-library(readr)
-dados <- read_csv("carrosTrat.csv", 
-    col_types = cols(stroke = col_double()))
-dados$price<-as.numeric(dados$price)
-head (dados)
-```
-
-
-
-### Dados Faltantes NA's
-
-```{r}
-round(mean(is.na(dados))*100,10)
-```
-
- Tem a presença de 0.075% de dados faltantes, analisando onde ele se encontra:
-
-```{r}
-library(skimr)
-skim(dados)
-```
-
-Observe que os dados faltantes se encontram em  **STROKE** (derramamento de óleo), eles precisam ser tratados:
-
-```{r}
-dados[is.na(dados$stroke),]$stroke = median(dados$stroke,na.rm = T)
-```
-
-### Foi atribuido para cada valor faltante a sua mediana da coluna, agora poderá seguir com o restante da análise dos dados.
-
-### Histograma e Normalidade
-
-```{r}
-library(ggplot2)
-dados %>% ggplot(aes(price))+
-  geom_density(fill = "darkblue")+
-  labs(x= "Preço", y="Densidade")
-```
-
- Observe que os dados de preço são assimétricos a esquerda.
-
-```{r}
-shapiro.test(dados$price)
-```
-
- Pelo teste de normalidade univariada de Shapiro-Wilk, o valor deu menor que 0.05, então os dados de preço não seguem a normalidade dos resíduos.
-
-```{r}
-library(skimr)
-skim(dados)
-```
-
 ## Análise Exploratória 
 
 O ponta pé  inicial de qualquer análise é a análise exploratória, com ela começas a entender a grandeza dos nossos dados e os seus comportamentos, dessa forma,  vamos carregar os pacotes necessários e executar a análise exploratória: 
@@ -150,7 +91,7 @@ library(tidyverse)
 library(DT)
 library(readxl)
 
-
+rm(list = ls())
 dados<-read.table("dados.txt",sep = ",",header = TRUE)
 
 
@@ -191,6 +132,15 @@ glimpse(dados)
 Vamos utilizar a função **mutate_if** para colocar a condição de transformação das colunas, por exemplo , no primeiro código abaixo  as culanas de dados da coluna 3 a coluna 9  que são do tipo character serão convertidas para factor , os demais códigos abaixo seguem as mesmas linhas de raciocínio.
 
 ```{r,warning=FALSE,message=FALSE}
+
+
+dados$stroke[dados$stroke == "?"] <- "NA"
+dados$bore[dados$bore == "?"] <- "NA"
+dados$normalized.losses[dados$normalized.losses == "?"] <- "NA"
+dados$num.of.doors[dados$num.of.doors == "?"] <- "NA"
+dados$engine.size[dados$engine.size == "l"] <- "NA"
+dados$price[dados$price == "?"] <- "NA"
+
 dados[3:9]<-dados[3:9] %>% mutate_if(is.character,as.factor)
   
 dados[15:16]<-dados[15:16] %>% mutate_if(is.character,as.factor) 
@@ -202,9 +152,12 @@ dados[18]<-dados[18] %>% mutate_if(is.character,as.factor)
 
 dados[20]<-dados[20] %>% mutate_if(is.character,as.factor) 
 
-dados$compression.ratio[dados$compression.ratio == "?"] <- "NA"
+
 
 dados<-dados %>% mutate_if(is.character,as.numeric)
+
+
+
 ```
 
 Vamos observar os nossos dados 
@@ -244,21 +197,12 @@ dados[is.na(dados$normalized.losses),]$normalized.losses =median(dados$normalize
 dados[is.na(dados$price),]$price = median(dados$price,na.rm = T)
 
 
-dados$stroke[dados$stroke == "?"] <- "NA"
-
-
 dados$stroke<-as.numeric(dados$stroke)
 
-dados[is.na(dados$stroke),]$stroke = median(dados$stroke,na.rm = T)
+#dados[is.na(dados$stroke),]$stroke = median(dados$stroke,na.rm = T)
 
 
 dados[is.na(dados$bore),]$bore = median(dados$bore,na.rm = T)
-
-#dados$compression.ratio[dados$compression.ratio == "?"] <- "NA"
-
-
-
-dados$compression.ratio<-as.double(dados$compression.ratio)
 #dados[is.na(dados$compression.ratio),]$compression.ratio = median(dados$compression.ratio,na.rm = T)
 dados[is.na(dados$horsepower),]$horsepower= median(dados$horsepower,na.rm = T)
 
@@ -303,6 +247,24 @@ library(gt)
 dados |> head(10) |> gt()
 ```
 
+
+### Histograma e Normalidade
+
+```{r}
+library(ggplot2)
+dados %>% ggplot(aes(price))+
+  geom_density(fill = "darkblue")+
+  labs(x= "Preço", y="Densidade")
+```
+
+ Observe que os dados de preço são assimétricos a esquerda.
+
+```{r}
+shapiro.test(dados$price)
+```
+
+ Pelo teste de normalidade univariada de Shapiro-Wilk, o valor deu menor que 0.05, então os dados de preço não seguem a normalidade dos resíduos.
+
 ### Vendo as Correlações das Variáveis Númericas 
 
 Problemas de multicolinearidade são muitos comuns em modelos de regressão,isso acaba prejudicando o modelo, devido a este fato  vamos verificar a correção entre as variáveis preditoras, e depois vamos verificar quais variaveis remover, para verificar a correlação vamos executar  o gráfico de correlação  de pearson  através do comando abaixo:
@@ -331,7 +293,7 @@ library(caret)
 t<-dados[-26] |>
   dplyr::select(where(is.numeric)) 
 
- t[-1] %>%
+ t %>%
   cor() %>%
   findCorrelation( cutoff = .50, verbose = FALSE)
 ```
@@ -343,7 +305,7 @@ com repetidas
 ### Verificando se Temos Colunas Identicas 
 
 ```{r,warning=FALSE,message=FALSE}
-t[-1] %>%
+t %>%
   cor() %>%  findLinearCombos ()
 
 ```
@@ -351,13 +313,12 @@ Como podemos ver não temos colunas repetidas , vamos remover as colunas sugerid
 
 
 ```{r,warning=FALSE,message=FALSE}
-t<-dados[-1] |>
+t<-dados |>
   dplyr::select(where(is.numeric))  
    
-glimpse(t)
-
-novo<-t %>% 
-  dplyr::select(normalized.losses,compression.ratio,horsepower,peak.rpm,price )
+library(tidyverse)
+novo<-dados %>% 
+  dplyr::select(symboling,normalized.losses,compression.ratio,horsepower,peak.rpm,price )
 
 nov1<-dados |>
   dplyr::select(where(is.factor))  
@@ -365,7 +326,7 @@ nov1<-dados |>
 
 #unido os dados 
 
-# novo<-cbind(nov1,novo)
+ novo<-cbind(nov1,novo)
 # 
 # glimpse(novo)
 # novo<-novo |>
@@ -381,68 +342,33 @@ Agora podemos proseguir para criação do nosso modelo
 
 
 
-# Criando o Modelo MLG
- O primeiro modelo irá receber todas as variáveis , o segundo  modelo recebera as variaveis selecionadas , os demais modelos serão adicionando as variáveis um a um . fazendo os modelos 
 
+
+
+
+# Criando o Modelo MLG
+Após a remoção das variáveis com problemas de multicolinearidade vamos criar o primeiro modelo utilizando todas as variáveis, o segundo  modelo recebera as variaveis selecionadas ,
 ```{r,warning=FALSE,message=FALSE}
 # nv<- novo[11:16]
 # 
-mod<-glm(price~.,family = Gamma(link=log),data = t)
-
-# modelo com as variaveis selecionadas 
-mod2<-glm(price~.,family = Gamma(link=log),data = novo)
-summary(mod2)
+mod<-glm(price~.,family = Gamma(link=log),data = novo)
 
 
-mod2<-glm(price~ novo$,family = Gamma(link=log),data = novo)
+
+summary(mod)
+
+
+library(hnp)
+
+hnp(mod$residuals, sim = 99,resid.type ='deviance',how.many.out=T ,conf = 0.95,scale = T)
 ```
-
+ Podemos ver que várias  covariáveis não apresentaram significância , logo não são importantes para o modelo.
+ 
+ 
 Para determinar o melhor modelo vamos utilizar o critério informação  de Akaike  que é uma métrica que mensura a qualidade de um modelo estatístico visando também a sua simplicidade. Fornece, portanto, uma métrica para comparação e seleção de modelos, em que menores valores de AIC representam uma maior qualidade e simplicidade, segundo este critério.
 
 
-```{r,warning=FALSE,message=FALSE}
-mod2<-glm(price~.,family = Gamma(link=log),data = novo)
-summary(mod2)
-```
 
-
-```{r,warning=FALSE,message=FALSE}
-mod3<-glm(price~horsepower+peak.rpm,family = Gamma(link=log),data = novo)
-  
-summary(mod3)
-```
-
-
-```{r,warning=FALSE,message=FALSE}
-mod4<-glm(price~normalized.losses+horsepower+peak.rpm,family = Gamma(link=log),data = novo)
-  
-summary(mod4)
-```
-
-
-```{r,warning=FALSE,message=FALSE,echo=FALSE}
-# 
-# novo$make<-factor(novo$make,levels = c(unique(novo$make)),labels = c(1:21))
-# novo$fuel.type<-factor(novo$fuel.type,levels = c(unique(novo$fuel.type)),labels = c(1:2))
-# #novo$make<-factor(novo$aspiration,levels = c(unique(novo$aspiration.type)),labels = c(1:2))
-# 
-# novo$num.of.doors <-factor(novo$num.of.doors,levels = c(unique(novo$num.of.doors)),labels = c(1:2))
-# novo$body.style<-factor(novo$body.style,levels = c(unique(novo$body.style)),labels = c(1:5))
-#  novo$drive.wheels<-  factor(novo$drive.wheels,levels = c(unique(novo$drive.wheels)),labels = c(1:3))
-#  
-#  library(dplyr)
-#  
-#  test<- novo |> dplyr:: select(make,num.of.doors,body.style,
-#                        drive.wheels,symboling,normalized.losses,
-#                        compression.ratio,horsepower,peak.rpm,
-#                        price)
-#  
-#  test<- test %>% mutate_if(is.factor,as.numeric) 
- 
- 
- 
- # glimpse(test)
-```
 
 
 ## Verificando a Importancia das Variáveis para o Modelo
@@ -452,103 +378,106 @@ Vamos verificar quais variáveis são mais importantes para o modelo , para isso
 ```{r,warning=FALSE,message=FALSE}
 
 library(randomForest)
-importancia  = randomForest(price ~ ., data = t)
+importancia  = randomForest(price ~ ., data = novo)
 
 col = importance(importancia)
 options(scipen=999) 
+par(bg = '#586573')
 varImpPlot(importancia)
 ```
 
- Podemos perceber  que uma das variáveis removidas anteriormente  **engine.size** (cilindradas do motor) possui a maior importância 
- para o modelo , logo,vamos tentar ajustar um modelo com esssa covariável
+ Podemos perceber  que **make** apresenta maior importncia , seguida por **horsepower**   entre outras , as cováriaveis  com importância próximo a 0 serão removidas: (fuel.type,num.of.doors,aspiration).
  
  
  
-```{r,warning=FALSE,message=FALSE}
-t2<-t %>% 
-  dplyr::select(engine.size,curb.weight,horsepower,highway.mpg,city.mpg,length ,price)
+```{r}
+mod2<-glm(price~make+horsepower+num.of.cylinders+drive.wheels+fuel.system+
+      compression.ratio+engine.type+body.style+peak.rpm,family = poisson(link=log), data = novo)
+
+mod3<-glm(price~make+horsepower+num.of.cylinders+drive.wheels+fuel.system+
+      compression.ratio+engine.type+body.style+peak.rpm,family = poisson(link = "identity"), data = novo)
+summary(mod2)
 
 
-# modelo sugerido 1
-yu<-glm(price~engine.size+highway.mpg+length , family = Gamma(link=log),data = t2)
-summary(yu)
-```
-
-
-```{r,warning=FALSE,message=FALSE}
-# modelo sugerido 2 
-yu2<-glm(price~curb.weight+length , family = Gamma(link=log),data = t2)
-
-summary(yu2)
-```
-
-### Modelo Binomial Negativo 
-
-```{r,warning=FALSE,message=FALSE}
 require(MASS)
-mod.nb <- glm.nb(price~., data = novo)
+mod.nb <- glm.nb(price~make+horsepower+num.of.cylinders+drive.wheels+fuel.system+
+      compression.ratio+engine.type+body.style+peak.rpm, data = novo)
 
 summary(mod.nb)
+
+library(DescTools)
+PseudoR2(mod2)
+PseudoR2(mod3)
+
+hnp(mod2, sim = 99,resid.type ='deviance',how.many.out=T ,conf = 0.95,scale = T)
+
+
+mod2<-glm(price~make+horsepower+num.of.cylinders+fuel.system+
+      compression.ratio+body.style+engine.type,poisson(link = "log"), data = novo)
+
+require(hnp)
+hnp(mod2, sim = 99,resid.type ='deviance',how.many.out=T ,conf = 0.95,scale = T)
+
+# trabalhando com o preço transformado
+novo2<-novo
+
+
+novo2$price<-log(novo$price)
+
+
+mod2<-glm(price~make+horsepower+num.of.cylinders+drive.wheels+fuel.system+
+      compression.ratio+engine.type+body.style+peak.rpm,family = poisson(link = "log"), data = novo2)
+
+
+
+boxplot(scale(novo$price))
 ```
+ 
+ 
 
 
-
-
-```{r,warning=FALSE,message=FALSE}
-# modelo sugerido 2 
-yu2<-glm(price~curb.weight+length , family = Gamma(link=log),data = t2)
-
-summary(yu2)
-```
 
 
 
 
 ##  Tabela  de modelos
 ```{r,warning=FALSE,message=FALSE}
-library(hnp)
-
-ajuste = c('mod', 'mod2','mod3','mod4','yu','yu2','mod.nb')
-aic    = c(AIC(mod),AIC(mod2),AIC(mod3),AIC(mod4),AIC(yu),AIC(yu2),AIC(mod.nb))
-deviance    = c(deviance(mod),deviance(mod2),deviance(mod3),deviance(mod4),deviance(yu),deviance(yu2),deviance(mod.nb))
-#verossimilhanca = c(logLik(glmod1),logLik(glmod2),logLik(glmod3))
-df<-data.frame(ajuste, round(aic,2),round(deviance,2)) 
-colnames(df)=c("ajuste","AIC","Deveiance")
-
-df%>% datatable()
+# library(hnp)
+# 
+# ajuste = c('mod', 'mod2','mod3','yu','yu2','mod.nb')
+# aic    = c(AIC(mod),AIC(mod2),AIC(mod3),AIC(yu),AIC(yu2),AIC(mod.nb))
+# deviance    = c(deviance(mod),deviance(mod2),deviance(mod3),deviance(yu),deviance(yu2),deviance(mod.nb))
+# #verossimilhanca = c(logLik(glmod1),logLik(glmod2),logLik(glmod3))
+# df<-data.frame(ajuste, round(aic,2),round(deviance,2)) 
+# colnames(df)=c("ajuste","AIC","Deveiance")
+# 
+# df%>% datatable()
 
 
 ```
 
 
-Como podemos ver  pelo O critério de informação de Akaike (AIC) e o deviance, o modelo que apresentou os melhores resultados segundo os critérios foi o modelo yu, que o modelo que contem variáveis removidas anteriormente,entretanto ao verificar o gráfico de envelope simulado normalmente distribuído para os resíduos, notamos que temos vários pontos fora do envelope, logo mesmo o  critério de Akaike (AIC) e o deviance sendo o mais baixo, o modelo aparenta não ser o mais indicado 
-
-
-```{r,warning=FALSE,message=FALSE}
-hnp(yu$residuals, sim = 99,resid.type ='deviance',how.many.out=T ,
-    conf = 0.95,scale = T)
-
-
-hnp(mod.nb$residuals, sim = 99,resid.type ='deviance',how.many.out=T ,
-    conf = 0.95,scale = T)
-```
-
-Como podemos observar de fato temos vários pontos fora do envelope, com isso o segundo modelo  que apresentou as melhores métricas será o modelo escolhido, vamos fazer a verificação do envelope 
+Como podemos ver  pelo O critério de informação de Akaike (AIC) e o deviance, o modelo que apresentou os melhores resultados segundo os critérios foi o modelo **mod**, que o modelo que contem variáveis removidas anteriormente,entretanto ao verificar o gráfico de envelope simulado normalmente distribuído para os resíduos, notamos que temos vários pontos fora do envelope, logo mesmo o  critério de Akaike (AIC) e o deviance sendo o mais baixo, o modelo aparenta não ser o mais indicado 
 
 
 
 
 
-```{r,warning=FALSE,message=FALSE}
-# mod<-glm(test$price~.,family = Gamma(link=log),data = test)
- 
- summary(mod2)
-library('hnp')
-hnp(mod2$residuals, sim = 99,resid.type ='deviance',how.many.out=T ,
-    conf = 0.95,scale = T)
 
 
 
+
+
+
+
+# Conclusão 
+
+Como podemos ver mesmo o modelo **mod** sendo o melhor qualificado nas metricas do critério de informação de Akaique e na Deviance o grafico de envelope dos resíduos apresentou varios pontos  fora do envelope, logo, não é o modelo mais indicado para explicar nossa variável de interesse,sendo assim escolhemos o modelo **binomial negativo** embora não tenha apresentado o melhor AIC nem a melhor deviance  pussui o melhor R2, sendo assim o melhor modelo para explicar o preço dos carros. 
+
+## Exibindo os Coeficientes do Nosso Modelo 
+
+```{r}
+mod.nb$coefficients
 ```
 
 
@@ -567,3 +496,5 @@ Insurance Collision Report, Insurance Institute for Highway Safety, Watergate 60
 
  dados veículos- IBGE ,acessado em  09/10/2022
  <https://cidades.ibge.gov.br/brasil/pesquisa/22/28120>
+
+

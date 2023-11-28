@@ -23,23 +23,11 @@ para está análise utilizaremos o pacote ** RStanArm**  e o banco de dados **fo
 Variáveis:
 
 
-7. Informações de atributo:
+# Definindo o Problema de Negócio
+Nosso objetivo é construir um modelo de Machine Learning que seja capaz de fazer previsões sobre a taxa média de ocupação de casas na região de Boston, EUA, por proprietários. A variável a ser prevista é um valor numérico que representa a mediana da taxa de ocupação das casas em Boston. Para cada casa temos diversas variáveis explanatórias. Sendo assim, podemos resolver este problema empregando Regressão Linear Simples ou Múltipla.
 
-   Para mais informações, leia [Cortez e Morais, 2007].
-
-   (1) **X** Coordenada espacial do eixo X no mapa do parque de Montesinho: 1 a 9
-   (2) **Y** Coordenada espacial do eixo Y no mapa do parque de Montesinho: 2 a 9
-   3. **month** - mês do ano: "jan" a "dec"
-   4. **day** - dia da semana: "seg" a "sol"
-   5. **FFMC** - Índice FFMC do sistema FWI: 18,7 a 96,20
-   6. **DMC** - DMC do sistema FWI: 1,1 a 291,3
-   7. **DC** - Índice DC do sistema FWI: 7,9 a 860,6
-   8. **ISI** - Índice ISI do sistema FWI: 0,0 a 56,10
-   9. **temp** - temperatura em graus Celsius: 2,2 a 33,30
-   10. **RH** - umidade relativa em %: 15,0 a 100
-   11. vento - velocidade do vento em km/h: 0,40 a 9,40
-   12. **wind** - chuva externa em mm/m2: 0,0 a 6,4
-   13. **área** - a área queimada da floresta (em ha): 0,00 a 1090,84
+# Definindo o Dataset
+Usaremos o Boston Housing Dataset, que é um conjunto de dados que tem a taxa média de ocupação das casas, juntamente com outras 13 variáveis que podem estar relacionadas aos preços das casas. Esses são os fatores como condições socioeconômicas, condições ambientais, instalações educacionais e alguns outros fatores semelhantes. Existem 506 observações nos dados para 14 variáveis. Existem 12 variáveis numéricas em nosso conjunto de dados e 1 variável categórica. O objetivo deste projeto é construir um modelo de regressão linear para estimar a taxa média de ocupação das casas pelos proprietários em Boston.
 
 
 
@@ -77,7 +65,7 @@ library(DT)
 library(readxl)
 
 
-dados<-read.csv("forestfires.csv",sep = ",")
+dados<-read.csv("boston.csv")
 
 
 
@@ -112,12 +100,32 @@ glimpse(dados)
  
 ```{r}
  dados$month<-factor(dados$month,levels = c("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"),labels = c("1","2","3","4","5","6","7","8","9","10","11","12"))
+t<-glm(dados$target~.,family = Gamma(link = "inverse"),data = dados)
+
+glm
+autoplot(t)
+
+t2<-glm(dados$target~.,family = gaussian(link = "identity"),data = dados)
+
+
+summary(t2)
 
 
 
+
+t3<-glm(dados$target~.,family =quasipoisson(link = "log"),data = dados)
+
+
+summary(t3)
+
+autoplot(t3)
 dados$day<-factor(dados$day,levels=c("sun","mon","tue","wed",
             "thu","fri","sat"),labels = c("1","2","3","4","5","6","7"))
 
+model.negative.binomial <- glm.nb(target~., data = dados)
+ summary(model.negative.binomial)
+
+ autoplot(model.negative.binomial)
 ```
  
  Com nossas variáveis devidamente ordenadas  transformadas em fatores podemos converte-las para númericas,ou seja" por exemplo  , iremos cronologicamente trabalahar com a variável **day** ,considerando: dia 1 , dia 2 ,dia 3 e assim sucessivamente. O mesmo pensamento vale para a variável  **month** onde iremos considerar: mês 1 ,mês 2 , mês 3 .... 
@@ -279,152 +287,83 @@ varImpPlot(importancia)
 ```
  Como Dc apresentou correlaçao com a variável DCM vamos ter que remove-la do modelo, assim como a variável mês 
 ```{r}
-model1=glm(area~temp+DMC+day+RH+FFMC+wind+X+Y,family = poisson(link = "log"), data = dados)
-
-m1 <- glm(area ~ ., family = poisson('log'), data = dados)
-summary(m1)
-
-install.packages('countreg')
-par(mfrow=c(1,3))
-plot(m1, which=c(2,4))
-countreg::rootogram(m1)
-install.packages("countreg", repos="http://R-Forge.R-project.org")
-
-# glm
-# oi<-cor(dados[-3])
+# model1=glm(area~temp+DMC+day+RH+FFMC+wind+X+Y,family = poisson(link = "log"), data = dados)
 # 
+# m1 <- glm(area ~ ., family = poisson('log'), data = dados)
+# summary(m1)
+# 
+# install.packages('countreg')
+# par(mfrow=c(1,3))
+# plot(m1, which=c(2,4))
+# countreg::rootogram(m1)
+# install.packages("countreg", repos="http://R-Forge.R-project.org")
+# 
+# # glm
+# # oi<-cor(dados[-3])
+# # 
 # summary(model1)
 # 
 # corrplot::corrplot(cor(dados[-3]),type = "upper")
 # 
 # cor(dados)
-require(MASS)
-model.negative.binomial <- glm.nb(area~temp+DMC+day+RH+FFMC+DC+wind+X+Y, data = dados)
- summary(model.negative.binomial)
+
+
+
 # 
-# model2=glm(area~temp+DMC+day+RH+FFMC+DC+wind+X+Y,family = quasibinomial(link = "logit"), data = dados)
-# summary(m2 <- glm(area~temp+DMC+day+RH+FFMC+wind+X+Y, family =gaussian(link = "identity") , data = dados))
-# 
-# glm
-# 
-# summary(m1 <- glm.nb(area~temp+DMC+day+RH+FFMC+wind+X+Y,  data = dados))
-# summary(model2)
-# 
-# model1=glm(area~temp+DMC+day+RH+FFMC+wind+X+Y, family = exponential, data = dados)
-# shapiro.test(dados$area)
-summary(model1)
-
-library(survival)
-
-teste<-survreg(Surv(day,area)~temp+DMC+RH+FFMC+DC+wind+X+Y, data = dados,dist='')
-
-dau<-unique(dados$area)
-summary(teste
-)
-AIC(model1,model.negative.binomial)
-
-hist(unique(dados$area))
-#intalar pacote 
-install.packages("gamlss")
-
-library(gamlss)
-
-library(AICcmodavg)
-
-#define list of models
-models <- list( model.negative.binomial)
-models<- list(model1)
-
-#specify model names
-mod.names <- c( 'disp.qsec')
-
-#calculate AIC of each model
-install.packages("AICcmodavg")
-
-library(AICcmodavg)
-aictab(cand.set = models, modnames = mod.names)
-
-
-aictab()
-
-
-Model selection based on AICc:
-# modelo_NB <- gamlss(
-#   formula = casos ~ cs(prec1, df = 8)+cs(tmax1, df = 8)+cs(hum3, df = 8)+cs(ao, df = 8)+cs(mes, df = 8)+cs(lncasos1, df = 8),
-#   sigma.formula = ~ cs(prec1, df = 8)+cs(tmax1, df = 8)+cs(hum3, df = 8)+cs(ao, df = 8)+cs(mes, df = 8)+cs(lncasos1, df = 8),
-#   family  = NBII,
-#   mu.fix = TRUE,
-#   sigma.fix = TRUE,
-#   method = mixed(1,2),
-#   data    = data,
+# library(gamlss)
+# modelo_PO <- gamlss(
+#   formula = area ~ cs(temp, df = 8)+cs(DMC, df = 8)+cs(day, df = 8)+cs(RH, df = 8)+cs(FFMC, df = 8)+cs(wind, df = 8),
+#   family  = PO,
+#   data    = dados,
 #   trace   = FALSE
 # )
-
-gam
-
-gamlss(area~temp+DMC+day+RH+FFMC+wind+X+Y, family = NBII , data = dados)
-
-
-mod<-gamlss(area~pb(DMC),sigma.fo=~pb(DMC),family=PO, data=dados, method=mixed(1,20))
-
-plot(mod)
-
-
-
-library(gamlss)
-modelo_PO <- gamlss(
-  formula = area ~ cs(temp, df = 8)+cs(DMC, df = 8)+cs(day, df = 8)+cs(RH, df = 8)+cs(FFMC, df = 8)+cs(wind, df = 8),
-  family  = PO,
-  data    = dados,
-  trace   = FALSE
-)
-
-
-
-
-ftd1 <- gamlss(area ~cs(FFMC, df = 8), family = DPO,data = dados)
-
-
-
-library(ggfortify)
-autoplot(model1)
+# 
+# 
+# 
+# 
+# ftd1 <- gamlss(area ~cs(FFMC, df = 8), family = DPO,data = dados)
+# 
+# 
+# 
+# library(ggfortify)
+# autoplot(model1)
 
 
 ```
 
 ```{r}
-dados<-dados |> arrange(area)
-
-dados<-dados[1:300,]
-
-
-model1=glm(area~temp+DMC+day+RH+FFMC+wind+X+Y,family = poisson(link = "log"), data = dados)
+# dados<-dados |> arrange(area)
+# 
+# dados<-dados[1:300,]
+# 
+# 
+# model1=glm(area~temp+DMC+day+RH+FFMC+wind+X+Y,family = poisson(link = "log"), data = dados)
 
 ```
 
 
 
 ```{python}
-import pandas as pd 
-from sklearn.datasets import load_boston
-boston = load_boston() 
-
-
-dataset = pd.DataFrame(boston.data, columns = boston.feature_names)
-dataset['target'] = boston.target
+# import pandas as pd 
+# from sklearn.datasets import load_boston
+# boston = load_boston() 
+# 
+# 
+# dataset = pd.DataFrame(boston.data, columns = boston.feature_names)
+# dataset['target'] = boston.target
 ```
 
 
 
 
 ```{r}
-library(reticulate)
-dt<-py$dataset
-
-
-write.csv(dt,"boston.csv",row.names = F)
-hist(dt$LSTAT)
-
-shapiro.test(dt$LSTAT)
+# library(reticulate)
+# dt<-py$dataset
+# 
+# 
+# write.csv(dt,"boston.csv",row.names = F)
+# hist(dt$LSTAT)
+# 
+# shapiro.test(dt$LSTAT)
 ```
 
